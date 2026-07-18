@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ridenav-balance-relay",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-18",
+  "durable_objects": {
+    "bindings": [{ "name": "NAV_SESSIONS", "class_name": "NavigationSession" }]
+  },
+  "exports": {
+    "NavigationSession": { "type": "durable-object", "storage": "sqlite" }
+  },
+  "secrets": { "required": ["RELAY_SECRET"] },
+  "observability": { "enabled": true }
+}

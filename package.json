@@ -1,0 +1,29 @@
+{
+  "name": "ride-nav-balance",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Foreground turn-by-turn navigation display for Amazfit Balance",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "validate": "node scripts/validate-project.js",
+    "relay:config": "node scripts/generate-relay-config.js",
+    "prepreview": "npm run relay:config",
+    "predev": "npm run relay:config",
+    "prebuild": "npm run relay:config",
+    "zeus:version": "NODE_PATH=./node_modules/@zeppos/zeus-cli/private-modules zeus -v",
+    "login": "NODE_PATH=./node_modules/@zeppos/zeus-cli/private-modules zeus login",
+    "preview": "NODE_PATH=./node_modules/@zeppos/zeus-cli/private-modules zeus preview",
+    "dev": "NODE_PATH=./node_modules/@zeppos/zeus-cli/private-modules zeus dev",
+    "build": "NODE_PATH=./node_modules/@zeppos/zeus-cli/private-modules zeus build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@zeppos/zeus-cli": "latest"
+  },
+  "dependencies": {
+    "@zeppos/zml": "^0.0.43"
+  }
+}

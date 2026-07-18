@@ -1,0 +1,35 @@
+{
+  "configVersion": "v3",
+  "app": {
+    "appId": 2999999,
+    "appName": "RideNav Balance",
+    "appType": "app",
+    "version": { "code": 3, "name": "1.1.0" },
+    "icon": "icon.png",
+    "vender": "[DEVELOPER_NAME]",
+    "description": "Foreground turn-by-turn navigation display for Amazfit Balance"
+  },
+  "permissions": ["device:os.geolocation", "device:os.local_storage"],
+  "runtime": {
+    "apiVersion": { "compatible": "3.7", "target": "3.7", "minVersion": "3.0" },
+    "type": 0
+  },
+  "targets": {
+    "balance": {
+      "module": {
+        "page": { "pages": ["pages/home/index", "pages/setup/index", "pages/navigation/index", "pages/google-navigation/index", "pages/summary/index", "pages/error/index"] },
+        "app-side": { "path": "app-side/index" },
+        "setting": { "path": "setting/index" }
+      },
+      "platforms": [
+        { "name": "Amazfit Balance China", "deviceSource": 8519936, "st": "r", "sr": "w480" },
+        { "name": "Amazfit Balance Global", "deviceSource": 8519937, "st": "r", "sr": "w480" },
+        { "name": "Amazfit Balance", "deviceSource": 8519939, "st": "r", "sr": "w480" }
+      ],
+      "designWidth": 480
+    }
+  },
+  "i18n": { "en-US": { "appName": "RideNav Balance" } },
+  "defaultLanguage": "en-US",
+  "debug": false
+}

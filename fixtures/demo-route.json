@@ -1,0 +1,19 @@
+{
+  "routeId": "demo-balance-loop",
+  "mode": "bike",
+  "distanceMeters": 690,
+  "durationSeconds": 420,
+  "geometry": [
+    {"lat": 31.52040, "lon": 74.35870}, {"lat": 31.52130, "lon": 74.35870},
+    {"lat": 31.52220, "lon": 74.35870}, {"lat": 31.52220, "lon": 74.36000},
+    {"lat": 31.52120, "lon": 74.36000}, {"lat": 31.52120, "lon": 74.36120},
+    {"lat": 31.52020, "lon": 74.36120}
+  ],
+  "steps": [
+    {"id":"step-0","index":0,"maneuverType":"continue","maneuverModifier":"straight","instruction":"Continue north","shortInstruction":"Continue straight","roadName":"Demo Avenue","distanceMeters":200,"durationSeconds":120,"location":{"lat":31.52220,"lon":74.35870},"geometryStartIndex":0,"geometryEndIndex":2,"roundaboutExit":null},
+    {"id":"step-1","index":1,"maneuverType":"turn","maneuverModifier":"right","instruction":"Turn right onto Garden Road","shortInstruction":"Turn right","roadName":"Garden Road","distanceMeters":125,"durationSeconds":70,"location":{"lat":31.52220,"lon":74.36000},"geometryStartIndex":2,"geometryEndIndex":3,"roundaboutExit":null},
+    {"id":"step-2","index":2,"maneuverType":"turn","maneuverModifier":"right","instruction":"Turn right onto Canal Lane","shortInstruction":"Turn right","roadName":"Canal Lane","distanceMeters":110,"durationSeconds":70,"location":{"lat":31.52120,"lon":74.36000},"geometryStartIndex":3,"geometryEndIndex":4,"roundaboutExit":null},
+    {"id":"step-3","index":3,"maneuverType":"roundabout","maneuverModifier":"right","instruction":"At the roundabout, take exit 2","shortInstruction":"Roundabout exit 2","roadName":"Liberty Circle","distanceMeters":115,"durationSeconds":80,"location":{"lat":31.52120,"lon":74.36120},"geometryStartIndex":4,"geometryEndIndex":5,"roundaboutExit":2},
+    {"id":"step-4","index":4,"maneuverType":"arrive","maneuverModifier":"straight","instruction":"You have arrived","shortInstruction":"Arrive","roadName":"Destination","distanceMeters":110,"durationSeconds":80,"location":{"lat":31.52020,"lon":74.36120},"geometryStartIndex":5,"geometryEndIndex":6,"roundaboutExit":null}
+  ]
+}

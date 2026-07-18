@@ -1,0 +1,12 @@
+[
+  {"state":"waiting","delay":1000},
+  {"lat":31.52040,"lon":74.35870,"speed":4.5}, {"lat":31.52140,"lon":74.35870,"speed":5},
+  {"lat":31.52215,"lon":74.35870,"speed":3}, {"lat":31.52220,"lon":74.35890,"speed":4},
+  {"lat":31.52220,"lon":74.35995,"speed":3}, {"lat":31.52175,"lon":74.36000,"speed":4},
+  {"lat":31.52120,"lon":74.36000,"speed":2}, {"lat":31.52120,"lon":74.36050,"speed":3},
+  {"lat":31.52155,"lon":74.36055,"speed":3,"scenario":"off-route"},
+  {"lat":31.52156,"lon":74.36056,"speed":3,"scenario":"off-route"},
+  {"lat":31.52157,"lon":74.36057,"speed":3,"scenario":"reroute"},
+  {"lat":31.52120,"lon":74.36115,"speed":3}, {"lat":31.52070,"lon":74.36120,"speed":4},
+  {"lat":31.52021,"lon":74.36120,"speed":1,"scenario":"arrival"}
+]
