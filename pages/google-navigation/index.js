@@ -18,7 +18,7 @@ const fallbackManeuver = instruction => {
 }
 
 Page(BasePage({
-  state: { widgets: {}, timer: null, busy: false, instructionSignature: '', vibrator: null, failures: 0, hadActive: false, settings: { vibration: true, screenDuration: '1h' }, endArmed: false },
+  state: { widgets: {}, timer: null, busy: false, destroyed: false, instructionSignature: '', vibrator: null, failures: 0, hadActive: false, settings: { vibration: true, screenDuration: '1h' }, endArmed: false },
   build() {
     const w = this.state.widgets
     w.status = text({ x: 55, y: 24, w: 370, h: 34, text: 'Connecting…', text_size: 17, color: COLORS.amber })
@@ -30,7 +30,7 @@ Page(BasePage({
     w.end = button({ x: 135, y: 443, w: 210, h: 38, text: 'End guide', normal_color: COLORS.red, radius: 19, click_func: () => this.endGuide() })
     this.state.vibrator = new Vibrator()
     requestMessage(this, 'GET_SETTINGS').then(({ payload }) => { this.state.settings = { ...this.state.settings, ...payload.settings }; this.applyDisplay() }).catch(() => this.applyDisplay())
-    this.poll(); this.state.timer = setInterval(() => this.poll(), 2500)
+    this.poll()
   },
   applyDisplay() {
     try {
@@ -40,9 +40,9 @@ Page(BasePage({
     } catch (_) { toast('Some display controls are unavailable') }
   },
   poll() {
-    if (this.state.busy) return
+    if (this.state.destroyed || this.state.busy) return
     this.state.busy = true
-    requestMessage(this, 'GOOGLE_NAV_STATUS').then(({ payload }) => {
+    requestMessage(this, 'GOOGLE_NAV_STATUS', {}, 7000).then(({ payload }) => {
       this.state.failures = 0
       const ageSeconds = payload.updatedAt ? Math.max(0, Math.round((Date.now() - payload.updatedAt) / 1000)) : 0
       if (!payload.active) {
@@ -73,7 +73,10 @@ Page(BasePage({
         setText(this.state.widgets.instruction, 'Relay unavailable')
         setText(this.state.widgets.road, String(error?.message || '').includes('timeout') ? 'Check phone internet' : 'Open RideNav Bridge on phone')
       }
-    }).finally(() => { this.state.busy = false })
+    }).finally(() => {
+      this.state.busy = false
+      if (!this.state.destroyed) this.state.timer = setTimeout(() => this.poll(), this.state.failures ? 4000 : 2500)
+    })
   },
   endGuide() {
     if (this.state.endArmed) return home()
@@ -81,7 +84,8 @@ Page(BasePage({
     setTimeout(() => { this.state.endArmed = false; setText(this.state.widgets.end, 'End guide') }, 5000)
   },
   onDestroy() {
-    if (this.state.timer) clearInterval(this.state.timer)
+    this.state.destroyed = true
+    if (this.state.timer) clearTimeout(this.state.timer)
     try { this.state.vibrator?.stop(); resetPageBrightTime(); resetDropWristScreenOff(); resetPalmScreenOff(); setWakeUpRelaunch({ relaunch: false }) } catch (_) {}
   }
 }))

@@ -13,6 +13,8 @@ cd android-bridge
 gradle assembleDebug
 ```
 
-Install the signed release APK from the repository `dist/` directory on the OnePlus 13s. Open it and grant Notification Access and notification permission. In OxygenOS battery settings, set RideNav Bridge to **Unrestricted** and allow background activity. In Zepp → Profile → Amazfit Balance → Notifications and reminders → App alerts, enable **RideNav Bridge**.
+Install the signed release APK from the repository `dist/` directory on the OnePlus 15. Open it and grant Notification Access and notification permission. In OxygenOS battery settings, set RideNav Bridge to **Unrestricted**, allow background activity, and allow background mobile data. In Zepp → Profile → Amazfit Balance → Notifications and reminders → App alerts, enable **RideNav Bridge**.
 
 Start Google Maps navigation. The reliable path is the mirrored RideNav Bridge notification delivered by Zepp. For the full custom screen, open RideNav Balance → **Mirror Google Maps**; phone-local HTTP access is dependent on the Zepp Android app's network security policy.
+
+While navigation is active, the bridge refreshes the private relay every 30 seconds. This keeps long straight route legs alive even when Google Maps does not change its notification for several minutes.

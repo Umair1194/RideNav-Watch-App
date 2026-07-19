@@ -6,18 +6,30 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 
 public final class MapsNotificationService extends NotificationListenerService {
     private static final String MAPS_PACKAGE = "com.google.android.apps.maps";
     private final LocalStatusServer server = new LocalStatusServer();
+    private final Handler heartbeatHandler = new Handler(Looper.getMainLooper());
+    private final Runnable heartbeat = new Runnable() {
+        @Override public void run() {
+            if (connected) scanActive();
+            heartbeatHandler.postDelayed(this, 30000);
+        }
+    };
     private String lastSignature = "";
     static volatile boolean connected;
 
-    @Override public void onListenerConnected() { super.onListenerConnected(); connected = true; BridgeNotifier.createChannel(this); server.start(); scanActive(); }
-    @Override public void onListenerDisconnected() { connected = false; server.stop(); super.onListenerDisconnected(); }
-    @Override public void onDestroy() { connected = false; server.stop(); super.onDestroy(); }
+    @Override public void onListenerConnected() {
+        super.onListenerConnected(); connected = true; BridgeNotifier.createChannel(this); server.start(); scanActive();
+        heartbeatHandler.removeCallbacks(heartbeat); heartbeatHandler.postDelayed(heartbeat, 30000);
+    }
+    @Override public void onListenerDisconnected() { connected = false; heartbeatHandler.removeCallbacks(heartbeat); server.stop(); super.onListenerDisconnected(); }
+    @Override public void onDestroy() { connected = false; heartbeatHandler.removeCallbacks(heartbeat); server.stop(); super.onDestroy(); }
 
     @Override public void onNotificationPosted(StatusBarNotification sbn) {
         if (!MAPS_PACKAGE.equals(sbn.getPackageName()) || !sbn.isOngoing()) return;
@@ -33,7 +45,9 @@ public final class MapsNotificationService extends NotificationListenerService {
 
     private void scanActive() {
         boolean found = false;
-        for (StatusBarNotification sbn : getActiveNotifications()) if (MAPS_PACKAGE.equals(sbn.getPackageName())) { onNotificationPosted(sbn); found = true; }
+        for (StatusBarNotification sbn : getActiveNotifications()) {
+            if (MAPS_PACKAGE.equals(sbn.getPackageName()) && sbn.isOngoing()) { onNotificationPosted(sbn); found = true; }
+        }
         if (!found) { NavState.INSTANCE.clear(); RelayClient.publish(new NavParser.Result(false, "", "", "", "")); }
     }
 
