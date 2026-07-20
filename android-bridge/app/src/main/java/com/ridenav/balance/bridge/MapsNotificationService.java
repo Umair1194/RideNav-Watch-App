@@ -15,46 +15,57 @@ public final class MapsNotificationService extends NotificationListenerService {
     private static final String MAPS_PACKAGE = "com.google.android.apps.maps";
     private final LocalStatusServer server = new LocalStatusServer();
     private final Handler heartbeatHandler = new Handler(Looper.getMainLooper());
+    private final RouteLifecycle lifecycle = new RouteLifecycle();
     private final Runnable heartbeat = new Runnable() {
         @Override public void run() {
-            if (connected) scanActive();
-            heartbeatHandler.postDelayed(this, 30000);
+            if (!connected) return;
+            scanActive();
+            if (connected) heartbeatHandler.postDelayed(this, 30000);
         }
     };
-    private String lastSignature = "";
     static volatile boolean connected;
 
     @Override public void onListenerConnected() {
         super.onListenerConnected(); connected = true; BridgeNotifier.createChannel(this); server.start(); scanActive();
-        heartbeatHandler.removeCallbacks(heartbeat); heartbeatHandler.postDelayed(heartbeat, 30000);
+        heartbeatHandler.removeCallbacksAndMessages(null); heartbeatHandler.postDelayed(heartbeat, 30000);
     }
-    @Override public void onListenerDisconnected() { connected = false; heartbeatHandler.removeCallbacks(heartbeat); server.stop(); super.onListenerDisconnected(); }
-    @Override public void onDestroy() { connected = false; heartbeatHandler.removeCallbacks(heartbeat); server.stop(); super.onDestroy(); }
+    @Override public void onListenerDisconnected() { connected = false; heartbeatHandler.removeCallbacksAndMessages(null); server.stop(); super.onListenerDisconnected(); }
+    @Override public void onDestroy() { connected = false; heartbeatHandler.removeCallbacksAndMessages(null); server.stop(); super.onDestroy(); }
 
     @Override public void onNotificationPosted(StatusBarNotification sbn) {
-        if (!MAPS_PACKAGE.equals(sbn.getPackageName()) || !sbn.isOngoing()) return;
+        if (!MAPS_PACKAGE.equals(sbn.getPackageName())) return;
+        if (!publishIfNavigation(sbn)) scheduleScan(1000);
+    }
+
+    private boolean publishIfNavigation(StatusBarNotification sbn) {
+        if (!sbn.isOngoing()) return false;
         Bundle e = sbn.getNotification().extras;
         NavParser.Result result = NavParser.parse(e.getCharSequence(Notification.EXTRA_TITLE), e.getCharSequence(Notification.EXTRA_TEXT), e.getCharSequence(Notification.EXTRA_BIG_TEXT), e.getCharSequence(Notification.EXTRA_SUB_TEXT), e.getCharSequence(Notification.EXTRA_INFO_TEXT));
-        if (!result.active) return;
+        if (!result.active) return false;
+        lifecycle.markActive(result);
         NavState.INSTANCE.update(result); server.start(); RelayClient.publish(result); mirror(result);
+        return true;
     }
 
     @Override public void onNotificationRemoved(StatusBarNotification sbn) {
-        if (MAPS_PACKAGE.equals(sbn.getPackageName())) scanActive();
+        if (MAPS_PACKAGE.equals(sbn.getPackageName())) { lifecycle.markBoundary(); scheduleScan(750); scheduleScan(2500); }
     }
 
     private void scanActive() {
+        if (!connected) return;
         boolean found = false;
         for (StatusBarNotification sbn : getActiveNotifications()) {
-            if (MAPS_PACKAGE.equals(sbn.getPackageName()) && sbn.isOngoing()) { onNotificationPosted(sbn); found = true; }
+            if (MAPS_PACKAGE.equals(sbn.getPackageName()) && publishIfNavigation(sbn)) found = true;
         }
-        if (!found) { NavState.INSTANCE.clear(); RelayClient.publish(new NavParser.Result(false, "", "", "", "")); }
+        if (!found && lifecycle.markInactive()) {
+            NavState.INSTANCE.clear(); RelayClient.publish(new NavParser.Result(false, "", "", "", ""));
+        }
     }
 
+    private void scheduleScan(long delayMs) { heartbeatHandler.postDelayed(this::scanActive, delayMs); }
+
     private void mirror(NavParser.Result result) {
-        String signature = result.instruction + "|" + result.distance;
-        if (signature.equals(lastSignature)) return;
-        lastSignature = signature;
+        if (!lifecycle.shouldMirror(result)) return;
         BridgeNotifier.post(this, result.distance.isEmpty() ? "Google Maps direction" : result.distance, result.instruction);
     }
 }

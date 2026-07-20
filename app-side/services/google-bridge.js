@@ -8,7 +8,7 @@ export async function getGoogleNavigationStatus() {
   try {
     const response = await Promise.race([
       fetch({ url: BRIDGE_URL, method: 'GET', headers: { Authorization: `Bearer ${RELAY_TOKEN}` } }),
-      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('RideNav Android Bridge not reachable')), 1800) })
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('RideNav Android Bridge not reachable')), 5000) })
     ])
     if (response.status < 200 || response.status >= 300) throw new Error(`Android Bridge error (${response.status})`)
     const body = typeof response.body === 'string' ? JSON.parse(response.body) : response.body

@@ -5,6 +5,7 @@ import { Screen, Vibrator, VIBRATOR_SCENE_NOTIFICATION } from '@zos/sensor'
 import { setPageBrightTime, resetPageBrightTime, setWakeUpRelaunch, pauseDropWristScreenOff, resetDropWristScreenOff, pausePalmScreenOff, resetPalmScreenOff } from '@zos/display'
 import { arrowAsset, button, COLORS, setText, text, toast } from '../../shared/ui.js'
 import { requestMessage } from '../../shared/transport.js'
+import { beginWatchSession, endWatchSession, isCurrentWatchSession } from '../../shared/watch-session.js'
 
 const BRIGHT_MS = { '30m': 1800000, '1h': 3600000, '2h': 7200000, session: 2147483000 }
 const fallbackManeuver = instruction => {
@@ -18,8 +19,9 @@ const fallbackManeuver = instruction => {
 }
 
 Page(BasePage({
-  state: { widgets: {}, timer: null, busy: false, destroyed: false, instructionSignature: '', vibrator: null, failures: 0, hadActive: false, settings: { vibration: true, screenDuration: '1h' }, endArmed: false },
+  state: { widgets: {}, timer: null, busy: false, destroyed: false, generation: 0, instructionSignature: '', vibrator: null, failures: 0, hadActive: false, settings: { vibration: true, screenDuration: '1h' }, endArmed: false },
   build() {
+    const generation = beginWatchSession(this.state)
     const w = this.state.widgets
     w.status = text({ x: 55, y: 24, w: 370, h: 34, text: 'Connecting…', text_size: 17, color: COLORS.amber })
     w.arrow = hmUI.createWidget(hmUI.widget.IMG, { x: 145, y: 61, w: 190, h: 190, src: arrowAsset(fallbackManeuver('straight')) })
@@ -30,7 +32,7 @@ Page(BasePage({
     w.end = button({ x: 135, y: 443, w: 210, h: 38, text: 'End guide', normal_color: COLORS.red, radius: 19, click_func: () => this.endGuide() })
     this.state.vibrator = new Vibrator()
     requestMessage(this, 'GET_SETTINGS').then(({ payload }) => { this.state.settings = { ...this.state.settings, ...payload.settings }; this.applyDisplay() }).catch(() => this.applyDisplay())
-    this.poll()
+    this.poll(generation)
   },
   applyDisplay() {
     try {
@@ -39,10 +41,11 @@ Page(BasePage({
       pauseDropWristScreenOff({ duration: 0 }); pausePalmScreenOff({ duration: 0 }); setWakeUpRelaunch({ relaunch: true })
     } catch (_) { toast('Some display controls are unavailable') }
   },
-  poll() {
-    if (this.state.destroyed || this.state.busy) return
+  poll(generation = this.state.generation) {
+    if (!isCurrentWatchSession(this.state, generation) || this.state.busy) return
     this.state.busy = true
-    requestMessage(this, 'GOOGLE_NAV_STATUS', {}, 7000).then(({ payload }) => {
+    requestMessage(this, 'GOOGLE_NAV_STATUS', {}, 10000).then(({ payload }) => {
+      if (!isCurrentWatchSession(this.state, generation)) return
       this.state.failures = 0
       const ageSeconds = payload.updatedAt ? Math.max(0, Math.round((Date.now() - payload.updatedAt) / 1000)) : 0
       if (!payload.active) {
@@ -67,6 +70,7 @@ Page(BasePage({
       setText(this.state.widgets.road, payload.road || 'Google Maps')
       setText(this.state.widgets.eta, payload.eta ? `ETA ${payload.eta}` : '')
     }).catch(error => {
+      if (!isCurrentWatchSession(this.state, generation)) return
       this.state.failures += 1
       if (this.state.failures > 1) {
         setText(this.state.widgets.status, 'Connection interrupted')
@@ -74,8 +78,9 @@ Page(BasePage({
         setText(this.state.widgets.road, String(error?.message || '').includes('timeout') ? 'Check phone internet' : 'Open RideNav Bridge on phone')
       }
     }).finally(() => {
+      if (!isCurrentWatchSession(this.state, generation)) return
       this.state.busy = false
-      if (!this.state.destroyed) this.state.timer = setTimeout(() => this.poll(), this.state.failures ? 4000 : 2500)
+      this.state.timer = setTimeout(() => this.poll(generation), this.state.failures ? 4000 : 2500)
     })
   },
   endGuide() {
@@ -84,8 +89,8 @@ Page(BasePage({
     setTimeout(() => { this.state.endArmed = false; setText(this.state.widgets.end, 'End guide') }, 5000)
   },
   onDestroy() {
-    this.state.destroyed = true
     if (this.state.timer) clearTimeout(this.state.timer)
+    endWatchSession(this.state)
     try { this.state.vibrator?.stop(); resetPageBrightTime(); resetDropWristScreenOff(); resetPalmScreenOff(); setWakeUpRelaunch({ relaunch: false }) } catch (_) {}
   }
 }))

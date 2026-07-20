@@ -3,7 +3,9 @@ import { createMessage, validateMessage } from './protocol.js'
 export function requestMessage(context, type, payload = {}, timeoutMs = 8000) {
   const outbound = createMessage(type, payload)
   let timer
-  const request = context.request({ method: 'PROTOCOL', params: { message: outbound } })
+  // ZML otherwise keeps a lost BLE request alive for its 60-second default.
+  // Passing the native timeout releases the underlying handler as well as our UI watchdog.
+  const request = context.request({ method: 'PROTOCOL', params: { message: outbound } }, { timeout: timeoutMs })
   const timeout = new Promise((_, reject) => {
     timer = setTimeout(() => reject(new Error('Phone connection timeout')), timeoutMs)
   })

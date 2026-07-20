@@ -12,6 +12,14 @@ public final class NavParserTest {
         expect(merge.maneuverType.equals("merge") && merge.maneuverModifier.equals("left"), "merge");
         NavParser.Result unrelated = NavParser.parse("How was your visit?");
         expect(!unrelated.active, "unrelated Maps notification must be ignored");
+        RouteLifecycle lifecycle = new RouteLifecycle();
+        lifecycle.markActive(right);
+        expect(lifecycle.shouldMirror(right), "first route instruction is mirrored");
+        expect(!lifecycle.shouldMirror(right), "duplicate instruction is suppressed within a route");
+        expect(lifecycle.markInactive(), "first route completion is published");
+        expect(!lifecycle.markInactive(), "duplicate completion is suppressed");
+        lifecycle.markActive(right);
+        expect(lifecycle.shouldMirror(right), "same first instruction is mirrored for a second route");
         System.out.println("Android navigation parser tests passed.");
     }
 }
