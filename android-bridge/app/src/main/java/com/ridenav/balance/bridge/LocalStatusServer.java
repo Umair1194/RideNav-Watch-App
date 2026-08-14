@@ -37,7 +37,7 @@ final class LocalStatusServer {
             }
             if (!authorized) { write(client, 401, "{\"error\":\"unauthorized\"}"); return; }
             NavState s = NavState.INSTANCE;
-            String json = "{\"active\":" + s.active + ",\"instruction\":\"" + escape(s.instruction) + "\",\"distance\":\"" + escape(s.distance) + "\",\"eta\":\"" + escape(s.eta) + "\",\"road\":\"" + escape(s.road) + "\",\"maneuverType\":\"" + escape(s.maneuverType) + "\",\"maneuverModifier\":\"" + escape(s.maneuverModifier) + "\",\"roundaboutExit\":" + s.roundaboutExit + ",\"updatedAt\":" + s.updatedAt + ",\"bridgeOnline\":true}";
+            String json = "{\"active\":" + s.active + ",\"instruction\":\"" + escape(s.instruction) + "\",\"distance\":\"" + escape(s.distance) + "\",\"eta\":\"" + escape(s.eta) + "\",\"road\":\"" + escape(s.road) + "\",\"maneuverType\":\"" + escape(s.maneuverType) + "\",\"maneuverModifier\":\"" + escape(s.maneuverModifier) + "\",\"nextInstruction\":\"" + escape(s.nextInstruction) + "\",\"nextDistance\":\"" + escape(s.nextDistance) + "\",\"roundaboutExit\":" + s.roundaboutExit + ",\"updatedAt\":" + s.updatedAt + ",\"bridgeOnline\":true}";
             write(client, 200, json);
         } catch (Exception ignored) {}
     }

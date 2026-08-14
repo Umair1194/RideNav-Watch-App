@@ -9,6 +9,7 @@ coverage/
 tmp/
 android-bridge/.gradle/
 android-bridge/.toolchains/
+android-bridge/build/
 android-bridge/app/build/
 android-bridge/local.properties
 android-bridge/.signing/

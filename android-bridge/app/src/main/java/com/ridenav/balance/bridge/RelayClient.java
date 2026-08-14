@@ -55,7 +55,7 @@ final class RelayClient {
             connection.setRequestProperty("Authorization", "Bearer " + BuildConfig.RELAY_TOKEN);
             connection.setRequestProperty("Content-Type", "application/json");
             NavParser.Result r = envelope.result;
-            String body = "{\"active\":" + r.active + ",\"sequence\":" + envelope.sequence + ",\"instruction\":\"" + escape(r.instruction) + "\",\"distance\":\"" + escape(r.distance) + "\",\"eta\":\"" + escape(r.eta) + "\",\"road\":\"" + escape(r.road) + "\",\"maneuverType\":\"" + escape(r.maneuverType) + "\",\"maneuverModifier\":\"" + escape(r.maneuverModifier) + "\",\"roundaboutExit\":" + r.roundaboutExit + "}";
+            String body = "{\"active\":" + r.active + ",\"sequence\":" + envelope.sequence + ",\"instruction\":\"" + escape(r.instruction) + "\",\"distance\":\"" + escape(r.distance) + "\",\"eta\":\"" + escape(r.eta) + "\",\"road\":\"" + escape(r.road) + "\",\"maneuverType\":\"" + escape(r.maneuverType) + "\",\"maneuverModifier\":\"" + escape(r.maneuverModifier) + "\",\"nextInstruction\":\"" + escape(r.nextInstruction) + "\",\"nextDistance\":\"" + escape(r.nextDistance) + "\",\"roundaboutExit\":" + r.roundaboutExit + "}";
             try (OutputStream out = connection.getOutputStream()) { out.write(body.getBytes(StandardCharsets.UTF_8)); }
             int status = connection.getResponseCode(); if (status < 200 || status >= 300) throw new Exception("Relay HTTP " + status);
         } finally { if (connection != null) connection.disconnect(); }

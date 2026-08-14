@@ -5,6 +5,7 @@ export const MODES = ['car', 'bike', 'walk']
 export const DEFAULT_SETTINGS = {
   destination: '', destinationLat: '', destinationLon: '', mode: 'bike', units: 'metric',
   vibration: true, earlyAlerts: true, screenDuration: '1h', provider: 'demo',
+  hapticMode: 'all', hapticStrength: 'normal', displayMode: 'auto', textSize: 'standard',
   mapboxToken: '', backendUrl: '', demoMode: true
 }
 export const THRESHOLDS = {

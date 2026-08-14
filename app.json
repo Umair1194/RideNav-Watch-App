@@ -4,7 +4,7 @@
     "appId": 2999999,
     "appName": "RideNav Balance",
     "appType": "app",
-    "version": { "code": 6, "name": "1.2.0" },
+    "version": { "code": 7, "name": "1.3.0" },
     "icon": "icon.png",
     "vender": "[DEVELOPER_NAME]",
     "description": "Foreground turn-by-turn navigation display for Amazfit Balance"
@@ -17,7 +17,7 @@
   "targets": {
     "balance": {
       "module": {
-        "page": { "pages": ["pages/home/index", "pages/setup/index", "pages/navigation/index", "pages/google-navigation/index", "pages/summary/index", "pages/error/index"] },
+        "page": { "pages": ["pages/home/index", "pages/setup/index", "pages/navigation/index", "pages/google-navigation/index", "pages/diagnostics/index", "pages/summary/index", "pages/error/index"] },
         "app-side": { "path": "app-side/index" },
         "setting": { "path": "setting/index" }
       },

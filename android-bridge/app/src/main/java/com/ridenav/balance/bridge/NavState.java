@@ -9,6 +9,8 @@ final class NavState {
     volatile String road = "";
     volatile String maneuverType = "unknown";
     volatile String maneuverModifier = "straight";
+    volatile String nextInstruction = "";
+    volatile String nextDistance = "";
     volatile int roundaboutExit;
     volatile long updatedAt;
 
@@ -20,12 +22,14 @@ final class NavState {
         road = result.road;
         maneuverType = result.maneuverType;
         maneuverModifier = result.maneuverModifier;
+        nextInstruction = result.nextInstruction;
+        nextDistance = result.nextDistance;
         roundaboutExit = result.roundaboutExit;
         updatedAt = System.currentTimeMillis();
     }
 
     synchronized void clear() {
         active = false; instruction = ""; distance = ""; eta = ""; road = "";
-        maneuverType = "unknown"; maneuverModifier = "straight"; roundaboutExit = 0; updatedAt = System.currentTimeMillis();
+        maneuverType = "unknown"; maneuverModifier = "straight"; nextInstruction = ""; nextDistance = ""; roundaboutExit = 0; updatedAt = System.currentTimeMillis();
     }
 }

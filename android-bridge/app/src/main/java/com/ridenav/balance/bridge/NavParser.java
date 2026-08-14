@@ -15,8 +15,13 @@ final class NavParser {
     static final class Result {
         final boolean active; final String instruction; final String distance; final String eta; final String road;
         final String maneuverType; final String maneuverModifier; final int roundaboutExit;
+        final String nextInstruction; final String nextDistance;
         Result(boolean active, String instruction, String distance, String eta, String road) {
+            this(active, instruction, distance, eta, road, "", "");
+        }
+        Result(boolean active, String instruction, String distance, String eta, String road, String nextInstruction, String nextDistance) {
             this.active = active; this.instruction = instruction; this.distance = distance; this.eta = eta; this.road = road;
+            this.nextInstruction = nextInstruction; this.nextDistance = nextDistance;
             String[] maneuver = classify(instruction); this.maneuverType = maneuver[0]; this.maneuverModifier = maneuver[1];
             Matcher exit = EXIT.matcher(instruction); this.roundaboutExit = exit.find() ? Integer.parseInt(exit.group(1)) : 0;
         }
@@ -30,16 +35,23 @@ final class NavParser {
                 String clean = line.trim(); if (!clean.isEmpty() && !lines.contains(clean)) lines.add(clean);
             }
         }
-        String instruction = "", distance = "", eta = "", road = "";
+        String instruction = "", nextInstruction = "", nextDistance = "", distance = "", eta = "", road = "";
         boolean recognized = false;
         for (String line : lines) {
             String lower = line.toLowerCase(Locale.US);
             Matcher dm = DISTANCE.matcher(line); if (distance.isEmpty() && dm.find()) distance = dm.group(1).replace(',', '.');
             Matcher em = ETA.matcher(line); if (eta.isEmpty() && em.find()) eta = em.group(1);
-            if (instruction.isEmpty()) for (String action : ACTIONS) if (lower.contains(action)) { instruction = line; recognized = true; break; }
+            for (String action : ACTIONS) if (lower.contains(action)) {
+                if (instruction.isEmpty()) { instruction = line; recognized = true; }
+                else if (!line.equals(instruction) && nextInstruction.isEmpty()) {
+                    nextInstruction = line;
+                    Matcher next = DISTANCE.matcher(line); if (next.find()) nextDistance = next.group(1).replace(',', '.');
+                }
+                break;
+            }
         }
-        for (String line : lines) if (!line.equals(instruction) && !DISTANCE.matcher(line).matches() && !ETA.matcher(line).find() && line.length() < 70) { road = line; break; }
-        return new Result(recognized && !instruction.isEmpty(), instruction, distance, eta, road);
+        for (String line : lines) if (!line.equals(instruction) && !line.equals(nextInstruction) && !DISTANCE.matcher(line).matches() && !ETA.matcher(line).find() && line.length() < 70) { road = line; break; }
+        return new Result(recognized && !instruction.isEmpty(), instruction, distance, eta, road, nextInstruction, nextDistance);
     }
 
     private static String[] classify(String instruction) {

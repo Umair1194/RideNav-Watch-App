@@ -1,6 +1,6 @@
 # Reliability and long-term operation
 
-RideNav 1.2.0 uses two authenticated paths from the Zepp Side Service to the Android bridge:
+RideNav 1.3.0 uses two authenticated paths from the Zepp Side Service to the Android bridge:
 
 1. The private Cloudflare relay, with an automatic retry.
 2. The phone-local loopback bridge when the Zepp runtime permits cleartext loopback access.

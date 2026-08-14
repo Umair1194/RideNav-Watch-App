@@ -16,11 +16,12 @@ export class NavigationSession extends DurableObject {
       const state = {
         active: !!input.active,
         instruction: allowed(input.instruction), distance: allowed(input.distance), eta: allowed(input.eta), road: allowed(input.road),
+        nextInstruction: allowed(input.nextInstruction), nextDistance: allowed(input.nextDistance),
         maneuverType: maneuverTypes.has(input.maneuverType) ? input.maneuverType : 'unknown',
         maneuverModifier: allowed(input.maneuverModifier), roundaboutExit: Number.isInteger(input.roundaboutExit) ? input.roundaboutExit : 0,
         sequence, updatedAt: Date.now(), bridgeOnline: true
       }
-      if (!state.active) { state.instruction = ''; state.distance = ''; state.eta = ''; state.road = '' }
+      if (!state.active) { state.instruction = ''; state.distance = ''; state.eta = ''; state.road = ''; state.nextInstruction = ''; state.nextDistance = '' }
       await this.ctx.storage.put('latest', state)
       return json({ ok: true, updatedAt: state.updatedAt })
     }

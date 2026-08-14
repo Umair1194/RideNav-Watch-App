@@ -17,6 +17,8 @@ export async function getGoogleNavigationStatus() {
     distance: String(body.distance || ''),
     eta: String(body.eta || ''),
     road: String(body.road || ''),
+    nextInstruction: String(body.nextInstruction || ''),
+    nextDistance: String(body.nextDistance || ''),
     maneuverType: String(body.maneuverType || 'unknown'),
     maneuverModifier: String(body.maneuverModifier || 'straight'),
     roundaboutExit: Number(body.roundaboutExit) || 0,
