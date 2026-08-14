@@ -16,6 +16,7 @@ final class RelayClient {
     private static final AtomicLong SEQUENCE = new AtomicLong(System.currentTimeMillis());
     private static volatile boolean draining;
     static volatile long lastSuccessAt;
+    static volatile long lastAttemptAt;
     static volatile String lastError = "Not tested";
 
     private static final class Envelope {
@@ -47,6 +48,7 @@ final class RelayClient {
     private static void upload(Envelope envelope) throws Exception {
         HttpURLConnection connection = null;
         try {
+            lastAttemptAt = System.currentTimeMillis();
             URL url = new URL(BuildConfig.RELAY_URL + "/v1/session/" + BuildConfig.RELAY_SESSION);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST"); connection.setConnectTimeout(5000); connection.setReadTimeout(5000); connection.setDoOutput(true);
@@ -55,7 +57,7 @@ final class RelayClient {
             NavParser.Result r = envelope.result;
             String body = "{\"active\":" + r.active + ",\"sequence\":" + envelope.sequence + ",\"instruction\":\"" + escape(r.instruction) + "\",\"distance\":\"" + escape(r.distance) + "\",\"eta\":\"" + escape(r.eta) + "\",\"road\":\"" + escape(r.road) + "\",\"maneuverType\":\"" + escape(r.maneuverType) + "\",\"maneuverModifier\":\"" + escape(r.maneuverModifier) + "\",\"roundaboutExit\":" + r.roundaboutExit + "}";
             try (OutputStream out = connection.getOutputStream()) { out.write(body.getBytes(StandardCharsets.UTF_8)); }
-            int status = connection.getResponseCode(); if (status < 200 || status >= 300) throw new Exception("HTTP " + status);
+            int status = connection.getResponseCode(); if (status < 200 || status >= 300) throw new Exception("Relay HTTP " + status);
         } finally { if (connection != null) connection.disconnect(); }
     }
 

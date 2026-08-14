@@ -27,10 +27,17 @@ final class LocalStatusServer {
 
     private void handle(Socket socket) {
         try (Socket client = socket; BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()))) {
+            client.setSoTimeout(2000);
             String request = reader.readLine();
             if (request == null || !request.startsWith("GET /status ")) { write(client, 404, "{\"error\":\"not found\"}"); return; }
+            boolean authorized = false;
+            String header;
+            while ((header = reader.readLine()) != null && !header.isEmpty()) {
+                if (header.equals("Authorization: Bearer " + BuildConfig.RELAY_TOKEN)) authorized = true;
+            }
+            if (!authorized) { write(client, 401, "{\"error\":\"unauthorized\"}"); return; }
             NavState s = NavState.INSTANCE;
-            String json = "{\"active\":" + s.active + ",\"instruction\":\"" + escape(s.instruction) + "\",\"distance\":\"" + escape(s.distance) + "\",\"eta\":\"" + escape(s.eta) + "\",\"road\":\"" + escape(s.road) + "\",\"updatedAt\":" + s.updatedAt + "}";
+            String json = "{\"active\":" + s.active + ",\"instruction\":\"" + escape(s.instruction) + "\",\"distance\":\"" + escape(s.distance) + "\",\"eta\":\"" + escape(s.eta) + "\",\"road\":\"" + escape(s.road) + "\",\"maneuverType\":\"" + escape(s.maneuverType) + "\",\"maneuverModifier\":\"" + escape(s.maneuverModifier) + "\",\"roundaboutExit\":" + s.roundaboutExit + ",\"updatedAt\":" + s.updatedAt + ",\"bridgeOnline\":true}";
             write(client, 200, json);
         } catch (Exception ignored) {}
     }

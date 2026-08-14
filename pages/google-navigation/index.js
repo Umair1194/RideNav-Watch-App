@@ -49,7 +49,7 @@ Page(BasePage({
       this.state.failures = 0
       const ageSeconds = payload.updatedAt ? Math.max(0, Math.round((Date.now() - payload.updatedAt) / 1000)) : 0
       if (!payload.active) {
-        setText(this.state.widgets.status, payload.stale ? 'Paused • update is stale' : 'Bridge ready')
+        setText(this.state.widgets.status, payload.bridgeOnline === false ? 'Phone bridge sleeping' : payload.source === 'phone-local' ? 'Bridge ready • local' : 'Bridge ready')
         setText(this.state.widgets.instruction, this.state.hadActive ? 'Google navigation ended' : 'Waiting for Google Maps')
         setText(this.state.widgets.road, this.state.hadActive ? 'You can end this guide' : 'Start navigation on your phone')
         setText(this.state.widgets.distance, '--'); setText(this.state.widgets.eta, '')
@@ -73,9 +73,10 @@ Page(BasePage({
       if (!isCurrentWatchSession(this.state, generation)) return
       this.state.failures += 1
       if (this.state.failures > 1) {
-        setText(this.state.widgets.status, 'Connection interrupted')
-        setText(this.state.widgets.instruction, 'Relay unavailable')
-        setText(this.state.widgets.road, String(error?.message || '').includes('timeout') ? 'Check phone internet' : 'Open RideNav Bridge on phone')
+        const message = String(error?.message || '')
+        setText(this.state.widgets.status, 'Reconnecting…')
+        setText(this.state.widgets.instruction, message.includes('Relay rejected') ? 'Relay authentication error' : 'Phone connection interrupted')
+        setText(this.state.widgets.road, message.includes('timeout') ? 'Checking cloud and phone…' : 'Open RideNav Bridge on phone')
       }
     }).finally(() => {
       if (!isCurrentWatchSession(this.state, generation)) return

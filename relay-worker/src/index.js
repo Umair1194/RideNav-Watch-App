@@ -18,7 +18,7 @@ export class NavigationSession extends DurableObject {
         instruction: allowed(input.instruction), distance: allowed(input.distance), eta: allowed(input.eta), road: allowed(input.road),
         maneuverType: maneuverTypes.has(input.maneuverType) ? input.maneuverType : 'unknown',
         maneuverModifier: allowed(input.maneuverModifier), roundaboutExit: Number.isInteger(input.roundaboutExit) ? input.roundaboutExit : 0,
-        sequence, updatedAt: Date.now()
+        sequence, updatedAt: Date.now(), bridgeOnline: true
       }
       if (!state.active) { state.instruction = ''; state.distance = ''; state.eta = ''; state.road = '' }
       await this.ctx.storage.put('latest', state)
@@ -26,8 +26,8 @@ export class NavigationSession extends DurableObject {
     }
     if (request.method === 'GET') {
       const state = await this.ctx.storage.get('latest')
-      if (!state) return json({ active: false, instruction: '', distance: '', eta: '', road: '', updatedAt: 0 })
-      if (Date.now() - state.updatedAt > 120000) return json({ ...state, active: false, stale: true })
+      if (!state) return json({ active: false, instruction: '', distance: '', eta: '', road: '', updatedAt: 0, bridgeOnline: false })
+      if (Date.now() - state.updatedAt > 120000) return json({ ...state, active: false, stale: true, bridgeOnline: false })
       return json(state)
     }
     return json({ error: 'method not allowed' }, 405)

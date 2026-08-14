@@ -48,3 +48,5 @@ Before preview, replace numeric development app ID `2999999` in `app.json` with 
 - Add developer contact and jurisdiction-specific privacy disclosures.
 - Test all cleanup paths, multi-hour battery use, phone disconnect/reconnect, GNSS loss, reroute, and every maneuver on all three Balance device-source variants.
 - Run simulator tests, physical-watch QR preview, localization review, accessibility/readability checks, store screenshots, and final ZAB build.
+
+See `docs/RELIABILITY.md` for redundant transport behavior, long-term backups, and the private relay health command.

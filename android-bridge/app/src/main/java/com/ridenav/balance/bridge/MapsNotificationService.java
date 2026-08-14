@@ -57,8 +57,11 @@ public final class MapsNotificationService extends NotificationListenerService {
         for (StatusBarNotification sbn : getActiveNotifications()) {
             if (MAPS_PACKAGE.equals(sbn.getPackageName()) && publishIfNavigation(sbn)) found = true;
         }
-        if (!found && lifecycle.markInactive()) {
-            NavState.INSTANCE.clear(); RelayClient.publish(new NavParser.Result(false, "", "", "", ""));
+        if (!found) {
+            if (lifecycle.markInactive()) NavState.INSTANCE.clear();
+            // Keep proving that the bridge is alive even between routes. This also
+            // recovers automatically after DNS, mobile-data, or Cloudflare interruptions.
+            RelayClient.publish(new NavParser.Result(false, "", "", "", ""));
         }
     }
 
