@@ -1,6 +1,7 @@
 package com.ridenav.balance.bridge;
 
 import android.app.Notification;
+import android.os.Build;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -17,6 +18,8 @@ final class BridgeNotifier {
         manager.createNotificationChannel(channel);
     }
 
+    static void clear(Context context) { ((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFICATION_ID); }
+
     static void post(Context context, String title, String instruction) {
         createChannel(context);
         Notification notification = new Notification.Builder(context, CHANNEL)
@@ -24,7 +27,7 @@ final class BridgeNotifier {
             .setContentTitle(title)
             .setContentText(instruction)
             .setStyle(new Notification.BigTextStyle().bigText(instruction))
-            .setCategory(Notification.CATEGORY_NAVIGATION)
+            .setCategory(Build.VERSION.SDK_INT >= 28 ? Notification.CATEGORY_NAVIGATION : Notification.CATEGORY_STATUS)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
             .setOnlyAlertOnce(false)
             .setAutoCancel(true)

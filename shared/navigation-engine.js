@@ -17,7 +17,7 @@ export class NavigationEngine {
     this.stepIndex = Math.max(0, Math.min(options.stepIndex || 0, route.steps.length - 1))
     this.lastPosition = options.lastPosition || null
     this.lastRawPosition = null
-    this.lastUpdateAt = 0
+    this.lastUpdateAt = Number(options.lastPosition?.timestamp) || 0
     this.speed = 0
     this.offRouteSamples = 0
     this.passedSamples = 0
@@ -31,7 +31,8 @@ export class NavigationEngine {
     const now = sample.timestamp || Date.now()
     if (!isCoordinate(sample)) return { accepted: false, reason: 'invalid-coordinate' }
     if (Number.isFinite(sample.accuracy) && sample.accuracy > 80) return { accepted: false, reason: 'poor-accuracy' }
-    if (now < this.lastUpdateAt - 1000 || now - this.lastUpdateAt > 120000 && this.lastUpdateAt) this.lastRawPosition = null
+    if (this.lastUpdateAt && now <= this.lastUpdateAt) return { accepted: false, reason: 'old-position' }
+    if (this.lastUpdateAt && now - this.lastUpdateAt > 120000) { this.lastRawPosition = null; this.lastPosition = null; this.speed = 0 }
     if (this.lastRawPosition) {
       const elapsed = Math.max(1, (now - this.lastUpdateAt) / 1000)
       const moved = haversine(this.lastRawPosition, sample)

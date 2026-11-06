@@ -28,3 +28,18 @@ test('distance parsing supports Google Maps units', () => {
   assert.ok(Math.abs(distanceToMeters('0.5 mi') - 804.672) < 0.001)
   assert.ok(Math.abs(distanceToMeters('100 ft') - 30.48) < 0.01)
 })
+
+test('cancellation and offline heartbeats never imply arrival', () => {
+  const session = new GoogleNavSession()
+  session.success(live, 1000)
+  assert.equal(session.success({ active: false, bridgeOnline: true }, 2000).mode, 'waiting')
+  session.success(live, 3000)
+  assert.equal(session.success({ ...live, stale: true, bridgeOnline: false }, 4000).mode, 'bridge-sleeping')
+  assert.equal(session.failure(new Error('offline'), 5000).mode, 'reconnecting')
+  assert.equal(session.success(live, 6000).mode, 'live')
+})
+
+test('mentioning a destination is not arrival', () => {
+  const session = new GoogleNavSession()
+  assert.equal(session.success({ ...live, instruction: 'Continue to destination' }, 2000).mode, 'live')
+})

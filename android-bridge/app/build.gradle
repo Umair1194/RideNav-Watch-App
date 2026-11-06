@@ -13,8 +13,8 @@ android {
         applicationId 'com.ridenav.balance.bridge'
         minSdk 26
         targetSdk 35
-        versionCode 9
-        versionName '1.3.0'
+        versionCode 10
+        versionName '1.4.0'
         buildConfigField 'String', 'RELAY_URL', buildString('relayUrl')
         buildConfigField 'String', 'RELAY_TOKEN', buildString('relayToken')
         buildConfigField 'String', 'RELAY_SESSION', buildString('relaySession')

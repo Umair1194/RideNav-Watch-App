@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.ComponentName;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,7 +30,8 @@ public final class MapsNotificationService extends NotificationListenerService {
         super.onListenerConnected(); connected = true; BridgeNotifier.createChannel(this); server.start(); scanActive();
         heartbeatHandler.removeCallbacksAndMessages(null); heartbeatHandler.postDelayed(heartbeat, 30000);
     }
-    @Override public void onListenerDisconnected() { connected = false; heartbeatHandler.removeCallbacksAndMessages(null); server.stop(); super.onListenerDisconnected(); }
+    @Override public void onListenerDisconnected() { connected = false; heartbeatHandler.removeCallbacksAndMessages(null); server.stop(); super.onListenerDisconnected();
+        try { requestRebind(new ComponentName(this, MapsNotificationService.class)); } catch (SecurityException accessRevoked) { /* Wait for the user to restore Notification Access. */ } }
     @Override public void onDestroy() { connected = false; heartbeatHandler.removeCallbacksAndMessages(null); server.stop(); super.onDestroy(); }
 
     @Override public void onNotificationPosted(StatusBarNotification sbn) {
@@ -40,6 +42,7 @@ public final class MapsNotificationService extends NotificationListenerService {
     private boolean publishIfNavigation(StatusBarNotification sbn) {
         if (!sbn.isOngoing()) return false;
         Bundle e = sbn.getNotification().extras;
+        if (e == null) return false;
         NavParser.Result result = NavParser.parse(e.getCharSequence(Notification.EXTRA_TITLE), e.getCharSequence(Notification.EXTRA_TEXT), e.getCharSequence(Notification.EXTRA_BIG_TEXT), e.getCharSequence(Notification.EXTRA_SUB_TEXT), e.getCharSequence(Notification.EXTRA_INFO_TEXT));
         if (!result.active) return false;
         lifecycle.markActive(result);
@@ -54,11 +57,15 @@ public final class MapsNotificationService extends NotificationListenerService {
     private void scanActive() {
         if (!connected) return;
         boolean found = false;
-        for (StatusBarNotification sbn : getActiveNotifications()) {
+        StatusBarNotification[] notifications;
+        try { notifications = getActiveNotifications(); } catch (RuntimeException unavailable) { return; }
+        if (notifications == null) return;
+        for (StatusBarNotification sbn : notifications) {
             if (MAPS_PACKAGE.equals(sbn.getPackageName()) && publishIfNavigation(sbn)) found = true;
         }
         if (!found) {
-            if (lifecycle.markInactive()) NavState.INSTANCE.clear();
+            if (lifecycle.markInactive()) BridgeNotifier.clear(this);
+            NavState.INSTANCE.clear();
             // Keep proving that the bridge is alive even between routes. This also
             // recovers automatically after DNS, mobile-data, or Cloudflare interruptions.
             RelayClient.publish(new NavParser.Result(false, "", "", "", ""));

@@ -7,6 +7,10 @@ export function validateRoute(route) {
   if (!Array.isArray(route.geometry) || route.geometry.length < 2 || route.geometry.some(p => !isCoordinate(p))) return { valid: false, error: 'Invalid route geometry' }
   if (route.geometry.length > MAX_ROUTE_POINTS) return { valid: false, error: 'Route data too large' }
   if (!Array.isArray(route.steps) || !route.steps.length) return { valid: false, error: 'Route has no maneuvers' }
+  for (const step of route.steps) {
+    if (!isCoordinate(step?.location) || typeof step.instruction !== 'string') return { valid: false, error: 'Invalid maneuver' }
+    if (!Number.isInteger(step.geometryStartIndex) || !Number.isInteger(step.geometryEndIndex) || step.geometryStartIndex < 0 || step.geometryEndIndex < step.geometryStartIndex || step.geometryEndIndex >= route.geometry.length) return { valid: false, error: 'Invalid maneuver geometry' }
+  }
   return { valid: true }
 }
 

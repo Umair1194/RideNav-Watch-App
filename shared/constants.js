@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS = {
   destination: '', destinationLat: '', destinationLon: '', mode: 'bike', units: 'metric',
   vibration: true, earlyAlerts: true, screenDuration: '1h', provider: 'demo',
   hapticMode: 'all', hapticStrength: 'normal', displayMode: 'auto', textSize: 'standard',
-  mapboxToken: '', backendUrl: '', demoMode: true
+  mapboxToken: '', backendUrl: '', backendToken: '', demoMode: true
 }
 export const THRESHOLDS = {
   car: { early: 300, prepare: 120, final: 40, offRoute: 45, stationarySpeed: 0.8 },

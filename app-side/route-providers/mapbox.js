@@ -1,3 +1,4 @@
+import { phoneFetch } from '../services/network.js'
 import { normalizeMapbox } from './normalizer.js'
 
 const TIMEOUT_MS = 12000
@@ -5,7 +6,7 @@ const profiles = { car: 'driving', bike: 'cycling', walk: 'walking' }
 async function fetchJson(url, timeout = TIMEOUT_MS) {
   let timer
   try {
-    const result = await Promise.race([fetch({ url, method: 'GET' }), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Request timeout')), timeout) })])
+    const result = await Promise.race([phoneFetch({ url, method: 'GET' }), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Request timeout')), timeout) })])
     if (result.status === 429) throw new Error('Routing provider rate limit')
     if (result.status < 200 || result.status >= 300) throw new Error(`Routing provider error (${result.status})`)
     const json = typeof result.body === 'string' ? JSON.parse(result.body) : result.body

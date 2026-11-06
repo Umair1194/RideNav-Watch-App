@@ -14,6 +14,8 @@ public final class NavParserTest {
         expect(!unrelated.active, "unrelated Maps notification must be ignored");
         NavParser.Result twoTurns = NavParser.parse("200 m", "Turn left onto First Road", "Then turn right in 600 m", "ETA 1:15 PM");
         expect(twoTurns.nextInstruction.equals("Then turn right in 600 m") && twoTurns.nextDistance.equals("600 m"), "optional next maneuver");
+        expect(!NavParser.parse("Continue to destination").maneuverType.equals("arrive"), "destination wording is not arrival");
+        expect(NavParser.parse("You have arrived").maneuverType.equals("arrive"), "explicit arrival");
         RouteLifecycle lifecycle = new RouteLifecycle();
         lifecycle.markActive(right);
         expect(lifecycle.shouldMirror(right), "first route instruction is mirrored");

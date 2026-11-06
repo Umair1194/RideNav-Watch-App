@@ -50,7 +50,7 @@ public final class MainActivity extends Activity {
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) { super.onRequestPermissionsResult(requestCode, permissions, results); refresh(); }
 
     private void refresh() {
-        boolean listener = MapsNotificationService.connected || isListenerEnabled();
+        boolean listener = MapsNotificationService.connected;
         boolean notifications = Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         PowerManager power = (PowerManager) getSystemService(POWER_SERVICE);
         boolean unrestricted = power.isIgnoringBatteryOptimizations(getPackageName());

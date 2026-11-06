@@ -3,6 +3,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@drawable/ic_nav"
         android:label="RideNav Bridge"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">

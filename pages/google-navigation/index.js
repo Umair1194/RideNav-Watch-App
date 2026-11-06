@@ -3,8 +3,9 @@ import * as hmUI from '@zos/ui'
 import { home, push } from '@zos/router'
 import { Screen, Vibrator, VIBRATOR_SCENE_NOTIFICATION, VIBRATOR_SCENE_STRONG_REMINDER, VIBRATOR_SCENE_DURATION } from '@zos/sensor'
 import { setPageBrightTime, resetPageBrightTime, setWakeUpRelaunch, pauseDropWristScreenOff, resetDropWristScreenOff, pausePalmScreenOff, resetPalmScreenOff } from '@zos/display'
-import { arrowAsset, button, COLORS, setText, setVisible, text, toast } from '../../shared/ui.js'
-import { requestMessage } from '../../shared/transport.js'
+import { arrowAsset, button, COLORS, setText, text, toast } from '../../shared/ui.js'
+import { truncate } from '../../shared/format.js'
+import { incomingCall, requestMessage } from '../../shared/transport.js'
 import { beginWatchSession, endWatchSession, isCurrentWatchSession } from '../../shared/watch-session.js'
 import { distanceToMeters, GoogleNavSession } from '../../shared/google-nav-session.js'
 
@@ -25,21 +26,22 @@ Page(BasePage({
     const generation = beginWatchSession(this.state)
     this.state.nav = new GoogleNavSession()
     const w = this.state.widgets
-    w.status = text({ x: 75, y: 22, w: 330, h: 32, text: '● CONNECTING', text_size: 16, color: COLORS.amber })
-    w.menu = button({ x: 405, y: 20, w: 48, h: 34, text: '•••', text_size: 16, normal_color: 0x202830, press_color: 0x303840, radius: 17, click_func: () => this.toggleControls() })
-    w.arrow = hmUI.createWidget(hmUI.widget.IMG, { x: 130, y: 54, w: 220, h: 220, src: arrowAsset(fallbackManeuver('straight')) })
+    w.status = text({ x: 112, y: 38, w: 256, h: 32, text: '● CONNECTING', text_size: 16, color: COLORS.amber })
+    w.menu = button({ x: 374, y: 78, w: 56, h: 48, text: '•••', text_size: 16, normal_color: 0x202830, press_color: 0x303840, radius: 24, click_func: () => this.toggleControls() })
+    w.arrow = hmUI.createWidget(hmUI.widget.IMG, { x: 140, y: 72, w: 200, h: 200, src: arrowAsset(fallbackManeuver('straight')) })
     w.distance = text({ x: 45, y: 270, w: 390, h: 58, text: '--', text_size: 48 })
-    w.instruction = text({ x: 48, y: 326, w: 384, h: 58, text: 'Waiting for Google Maps', text_size: 25, text_style: hmUI.text_style.WRAP })
-    w.road = text({ x: 65, y: 384, w: 350, h: 28, text: 'Start navigation on your phone', text_size: 17, color: COLORS.muted })
-    w.next = text({ x: 55, y: 414, w: 370, h: 27, text: '', text_size: 16, color: COLORS.amber })
-    w.eta = text({ x: 70, y: 445, w: 340, h: 25, text: '', text_size: 16, color: COLORS.blue })
+    w.instruction = text({ x: 48, y: 326, w: 384, h: 68, text: 'Waiting for Google Maps', text_size: 25, text_style: hmUI.text_style.WRAP })
+    w.road = text({ x: 80, y: 394, w: 320, h: 24, text: 'Start navigation on your phone', text_size: 17, color: COLORS.muted })
+    w.next = text({ x: 110, y: 412, w: 260, h: 27, text: '', text_size: 16, color: COLORS.amber })
+    w.eta = text({ x: 150, y: 438, w: 180, h: 22, text: '', text_size: 16, color: COLORS.blue })
     this.state.vibrator = new Vibrator()
+    this.applyDisplay()
     requestMessage(this, 'GET_SETTINGS').then(({ payload }) => {
       if (!isCurrentWatchSession(this.state, generation)) return
       this.state.settings = { ...this.state.settings, ...payload.settings }
       this.applyDisplay()
       this.applyAccessibility()
-    }).catch(() => this.applyDisplay())
+    }).catch(() => { if (isCurrentWatchSession(this.state, generation)) this.applyDisplay() })
     this.poll(generation)
   },
   applyDisplay() {
@@ -53,13 +55,13 @@ Page(BasePage({
     const large = this.state.settings.textSize === 'large'
     const sunlight = this.state.settings.displayMode === 'sunlight'
     this.state.widgets.distance?.setProperty(hmUI.prop.MORE, { text_size: large || sunlight ? 54 : 48, color: COLORS.white })
-    this.state.widgets.instruction?.setProperty(hmUI.prop.MORE, { text_size: large ? 28 : 25, color: COLORS.white })
+    this.state.widgets.instruction?.setProperty(hmUI.prop.MORE, { text_size: large ? 27 : 24, color: COLORS.white })
     this.state.widgets.road?.setProperty(hmUI.prop.MORE, { text_size: large ? 20 : 17, color: sunlight ? COLORS.white : COLORS.muted })
   },
   poll(generation = this.state.generation) {
     if (!isCurrentWatchSession(this.state, generation) || this.state.busy) return
     this.state.busy = true
-    requestMessage(this, 'GOOGLE_NAV_STATUS', {}, 10000).then(({ payload }) => {
+    requestMessage(this, 'GOOGLE_NAV_STATUS', {}, 12000).then(({ payload }) => {
       if (!isCurrentWatchSession(this.state, generation)) return
       this.state.failures = 0
       this.renderView(this.state.nav.success(payload))
@@ -79,6 +81,7 @@ Page(BasePage({
     if (view.mode === 'arrived') {
       this.setStatus('✓ ARRIVED', COLORS.green)
       this.state.widgets.arrow.setProperty(hmUI.prop.SRC, arrowAsset({ maneuverType: 'arrive' }))
+      this.state.widgets.distance.setProperty(hmUI.prop.COLOR, COLORS.green)
       setText(this.state.widgets.distance, '✓')
       setText(this.state.widgets.instruction, 'You have arrived')
       setText(this.state.widgets.road, 'Waiting for your next route')
@@ -92,6 +95,7 @@ Page(BasePage({
     const reconnecting = view.mode === 'reconnecting' || auth
     this.setStatus(reconnecting ? '● RECONNECTING' : sleeping ? '● PHONE SLEEPING' : '● READY', reconnecting || sleeping ? COLORS.amber : COLORS.green)
     this.state.widgets.arrow.setProperty(hmUI.prop.SRC, arrowAsset(fallbackManeuver('straight')))
+    this.state.widgets.distance.setProperty(hmUI.prop.COLOR, COLORS.white)
     setText(this.state.widgets.distance, '--')
     setText(this.state.widgets.instruction, auth ? 'Relay needs attention' : reconnecting ? 'Restoring directions…' : 'Waiting for Google Maps')
     setText(this.state.widgets.road, sleeping ? 'Open RideNav Bridge on phone' : reconnecting ? 'Checking phone and cloud' : 'Start a route on your phone')
@@ -100,19 +104,19 @@ Page(BasePage({
   },
   renderGuidance(payload, view) {
     const age = payload.updatedAt ? Math.max(0, Math.round((Date.now() - payload.updatedAt) / 1000)) : 0
-    const delayed = view.mode === 'grace' || age > 15
+    const delayed = view.mode === 'grace' || age > 45
     this.setStatus(delayed ? '● UPDATING' : payload.source === 'phone-local' ? '● LIVE • LOCAL' : '● LIVE', delayed ? COLORS.amber : COLORS.green)
     const maneuver = payload.maneuverType && payload.maneuverType !== 'unknown' ? payload : fallbackManeuver(payload.instruction)
     this.state.widgets.arrow.setProperty(hmUI.prop.SRC, arrowAsset(maneuver))
     const meters = distanceToMeters(payload.distance)
     this.state.widgets.distance.setProperty(hmUI.prop.COLOR, meters <= 25 ? COLORS.red : meters <= 80 ? COLORS.amber : COLORS.white)
     setText(this.state.widgets.distance, payload.distance || '--')
-    setText(this.state.widgets.instruction, payload.instruction || 'Continue')
-    setText(this.state.widgets.road, payload.road || 'Google Maps')
-    setText(this.state.widgets.next, payload.nextInstruction ? `Then: ${payload.nextInstruction}${payload.nextDistance && !payload.nextInstruction.includes(payload.nextDistance) ? ` • ${payload.nextDistance}` : ''}` : '')
-    setText(this.state.widgets.eta, view.mode === 'grace' ? 'Updating phone connection…' : payload.eta ? `ETA ${payload.eta}` : '')
-    const signature = `${payload.instruction}|${payload.distance}`.toLowerCase()
-    if (signature && signature !== this.state.instructionSignature) {
+    setText(this.state.widgets.instruction, truncate(payload.instruction || 'Continue', this.state.settings.textSize === 'large' ? 48 : 56))
+    setText(this.state.widgets.road, truncate(payload.road || 'Google Maps', 28))
+    setText(this.state.widgets.next, payload.nextInstruction ? `Then: ${String(payload.nextInstruction).replace(/^then[:\s]+/i, '')}${payload.nextDistance && !payload.nextInstruction.includes(payload.nextDistance) ? ` • ${payload.nextDistance}` : ''}` : '')
+    setText(this.state.widgets.eta, view.mode === 'grace' ? 'Updating phone connection…' : payload.eta ? `ETA ${truncate(payload.eta, 15)}` : '')
+    const signature = `${payload.instruction}|${meters <= 50 ? 'final' : meters <= 180 ? 'prepare' : 'early'}`.toLowerCase()
+    if (!delayed && !(meters > 180 && this.state.settings.earlyAlerts === false) && signature && signature !== this.state.instructionSignature) {
       this.state.instructionSignature = signature
       this.vibrate(meters <= 50 ? 'final' : 'maneuver')
     }
@@ -130,15 +134,23 @@ Page(BasePage({
     this.state.vibrator.start({ mode })
   },
   toggleControls() {
-    if (this.state.controls.length) { this.state.controls.forEach(widget => hmUI.deleteWidget(widget)); this.state.controls = []; return }
+    if (this.state.controls.length) { this.state.endArmed = false; this.state.controls.forEach(widget => hmUI.deleteWidget(widget)); this.state.controls = []; return }
     const panel = hmUI.createWidget(hmUI.widget.FILL_RECT, { x: 45, y: 105, w: 390, h: 280, color: 0x111820, radius: 28 })
-    const resume = button({ x: 95, y: 132, w: 290, h: 55, text: 'Keep navigating', click_func: () => this.toggleControls() })
+    const resume = button({ x: 95, y: 132, w: 290, h: 55, text: 'Keep navigating', click_func: () => { this.state.endArmed = false; this.toggleControls() } })
     const diagnostics = button({ x: 95, y: 207, w: 290, h: 55, text: 'Connection details', normal_color: 0x303840, click_func: () => push({ url: 'pages/diagnostics/index' }) })
     const end = button({ x: 95, y: 282, w: 290, h: 55, text: this.state.endArmed ? 'Confirm close' : 'Close RideNav', normal_color: COLORS.red, click_func: () => {
       if (this.state.endArmed) return home()
-      this.state.endArmed = true; this.toggleControls(); toast('Open controls and confirm close')
+      this.state.endArmed = true; setText(end, 'Confirm close'); toast('Tap Confirm close to exit')
     } })
     this.state.controls = [panel, resume, diagnostics, end]
+  },
+  onCall(data) {
+    const validation = incomingCall(data)
+    if (!validation.valid || this.state.destroyed) return
+    if (validation.message.type === 'SETTINGS_CHANGED') {
+      this.state.settings = { ...this.state.settings, ...validation.message.payload.settings }
+      this.applyDisplay(); this.applyAccessibility()
+    }
   },
   onDestroy() {
     if (this.state.timer) clearTimeout(this.state.timer)

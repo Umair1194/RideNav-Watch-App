@@ -1,3 +1,4 @@
+import { routeBackend } from '../route-providers/backend.js'
 import { getDemoRoute, routeMapbox } from '../route-providers/index.js'
 import { resolveDestination } from './geocoding.js'
 import { validateRoute } from '../../shared/route-model.js'
@@ -8,9 +9,8 @@ export async function getRoute(origin, settings, forceDemo = false) {
   if (forceDemo || settings.demoMode || settings.provider === 'demo') route = await getDemoRoute(settings.mode)
   else {
     if (!origin || !Number.isFinite(origin.lat) || !Number.isFinite(origin.lon)) throw new Error('Waiting for a valid GPS position')
-    const destination = await resolveDestination(settings)
-    if (settings.provider === 'mapbox') route = await routeMapbox(origin, destination, settings.mode, settings.mapboxToken)
-    else if (settings.provider === 'backend') throw new Error('Production backend provider is not configured yet')
+    if (settings.provider === 'mapbox') route = await routeMapbox(origin, await resolveDestination(settings), settings.mode, settings.mapboxToken)
+    else if (settings.provider === 'backend') route = await routeBackend(origin, settings)
     else throw new Error('Unsupported routing provider')
   }
   const validation = validateRoute(route)

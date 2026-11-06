@@ -10,7 +10,7 @@ final class NavParser {
     private static final Pattern DISTANCE = Pattern.compile("(?i)(\\d+(?:[.,]\\d+)?\\s?(?:m|km|ft|mi))\\b");
     private static final Pattern ETA = Pattern.compile("(?i)(?:ETA\\s*)?([0-2]?\\d:[0-5]\\d(?:\\s?[AP]M)?)");
     private static final Pattern EXIT = Pattern.compile("(?i)(?:exit\\s+|take\\s+)(\\d{1,2})(?:st|nd|rd|th)?");
-    private static final String[] ACTIONS = {"turn", "continue", "keep", "merge", "exit", "roundabout", "u-turn", "u turn", "head ", "arrive", "destination"};
+    private static final String[] ACTIONS = {"turn", "continue", "keep", "merge", "exit", "roundabout", "rotary", "fork", "ramp", "u-turn", "u turn", "head ", "arrive", "destination"};
 
     static final class Result {
         final boolean active; final String instruction; final String distance; final String eta; final String road;
@@ -56,7 +56,7 @@ final class NavParser {
 
     private static String[] classify(String instruction) {
         String value = instruction.toLowerCase(Locale.US);
-        if (value.contains("arriv") || value.contains("destination")) return new String[]{"arrive", "straight"};
+        if (value.contains("you have arrived") || value.contains("you've arrived") || value.contains("arrived at") || value.contains("destination reached")) return new String[]{"arrive", "straight"};
         if (value.contains("roundabout") || value.contains("rotary")) return new String[]{"roundabout", value.contains("left") ? "left" : "right"};
         if (value.contains("u-turn") || value.contains("u turn")) return new String[]{"turn", value.contains("right") ? "u-turn-right" : "u-turn-left"};
         if (value.contains("merge")) return new String[]{"merge", value.contains("left") ? "left" : "right"};

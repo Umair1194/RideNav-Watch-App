@@ -1,11 +1,12 @@
 import { RELAY_URL, RELAY_TOKEN, RELAY_SESSION } from '../../shared/relay-config.generated.js'
+import { phoneFetch } from './network.js'
 import { fetchBridgeWithFallback } from './bridge-failover.js'
 
 const BRIDGE_URL = `${RELAY_URL}/v1/session/${RELAY_SESSION}`
 const LOCAL_BRIDGE_URL = 'http://127.0.0.1:17463/status'
 
 export async function fetchGoogleBridgeStatus() {
-  return fetchBridgeWithFallback({ fetcher: fetch, cloudUrl: BRIDGE_URL, localUrl: LOCAL_BRIDGE_URL, token: RELAY_TOKEN })
+  return fetchBridgeWithFallback({ fetcher: phoneFetch, cloudUrl: BRIDGE_URL, localUrl: LOCAL_BRIDGE_URL, token: RELAY_TOKEN })
 }
 
 export async function getGoogleNavigationStatus() {

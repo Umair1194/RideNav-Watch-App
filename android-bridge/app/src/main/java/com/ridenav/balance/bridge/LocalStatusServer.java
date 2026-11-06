@@ -10,20 +10,28 @@ import java.nio.charset.StandardCharsets;
 
 final class LocalStatusServer {
     private volatile boolean running;
-    private ServerSocket server;
+    private volatile ServerSocket server;
 
-    void start() {
+    synchronized void start() {
         if (running) return;
-        running = true;
+        final ServerSocket owned;
+        try { owned = new ServerSocket(17463, 4, InetAddress.getByName("127.0.0.1")); } catch (Exception unavailable) { return; }
+        server = owned; running = true;
         new Thread(() -> {
-            try {
-                server = new ServerSocket(17463, 4, InetAddress.getByName("127.0.0.1"));
-                while (running) handle(server.accept());
-            } catch (Exception ignored) { running = false; }
+            try { while (server == owned && !owned.isClosed()) handle(owned.accept()); }
+            catch (Exception ignored) {}
+            finally {
+                try { owned.close(); } catch (Exception ignored) {}
+                synchronized (this) { if (server == owned) { server = null; running = false; } }
+            }
         }, "RideNavLocalServer").start();
     }
 
-    void stop() { running = false; try { if (server != null) server.close(); } catch (Exception ignored) {} }
+    synchronized void stop() {
+        running = false;
+        ServerSocket owned = server; server = null;
+        try { if (owned != null) owned.close(); } catch (Exception ignored) {}
+    }
 
     private void handle(Socket socket) {
         try (Socket client = socket; BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()))) {
@@ -33,11 +41,13 @@ final class LocalStatusServer {
             boolean authorized = false;
             String header;
             while ((header = reader.readLine()) != null && !header.isEmpty()) {
-                if (header.equals("Authorization: Bearer " + BuildConfig.RELAY_TOKEN)) authorized = true;
+                if (!BuildConfig.RELAY_TOKEN.isEmpty() && header.regionMatches(true, 0, "Authorization:", 0, 14) && header.substring(14).trim().equals("Bearer " + BuildConfig.RELAY_TOKEN)) authorized = true;
             }
             if (!authorized) { write(client, 401, "{\"error\":\"unauthorized\"}"); return; }
             NavState s = NavState.INSTANCE;
-            String json = "{\"active\":" + s.active + ",\"instruction\":\"" + escape(s.instruction) + "\",\"distance\":\"" + escape(s.distance) + "\",\"eta\":\"" + escape(s.eta) + "\",\"road\":\"" + escape(s.road) + "\",\"maneuverType\":\"" + escape(s.maneuverType) + "\",\"maneuverModifier\":\"" + escape(s.maneuverModifier) + "\",\"nextInstruction\":\"" + escape(s.nextInstruction) + "\",\"nextDistance\":\"" + escape(s.nextDistance) + "\",\"roundaboutExit\":" + s.roundaboutExit + ",\"updatedAt\":" + s.updatedAt + ",\"bridgeOnline\":true}";
+            String json;
+            synchronized (s) { json = "{\"active\":" + s.active + ",\"instruction\":\"" + escape(s.instruction) + "\",\"distance\":\"" + escape(s.distance) + "\",\"eta\":\"" + escape(s.eta) + "\",\"road\":\"" + escape(s.road) + "\",\"maneuverType\":\"" + escape(s.maneuverType) + "\",\"maneuverModifier\":\"" + escape(s.maneuverModifier) + "\",\"nextInstruction\":\"" + escape(s.nextInstruction) + "\",\"nextDistance\":\"" + escape(s.nextDistance) + "\",\"roundaboutExit\":" + s.roundaboutExit + ",\"updatedAt\":" + s.updatedAt + ",\"bridgeOnline\":true}";
+            }
             write(client, 200, json);
         } catch (Exception ignored) {}
     }
@@ -48,5 +58,5 @@ final class LocalStatusServer {
         OutputStream out = socket.getOutputStream(); out.write(headers.getBytes(StandardCharsets.US_ASCII)); out.write(data); out.flush();
     }
 
-    private static String escape(String value) { return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", ""); }
+    private static String escape(String value) { String quoted = org.json.JSONObject.quote(value); return quoted.substring(1, quoted.length() - 1); }
 }

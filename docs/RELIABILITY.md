@@ -1,6 +1,6 @@
 # Reliability and long-term operation
 
-RideNav 1.3.0 uses two authenticated paths from the Zepp Side Service to the Android bridge:
+RideNav 1.4.0 uses two authenticated paths from the Zepp Side Service to the Android bridge:
 
 1. The private Cloudflare relay, with an automatic retry.
 2. The phone-local loopback bridge when the Zepp runtime permits cleartext loopback access.
@@ -18,3 +18,5 @@ Run `npm run relay:health` from the project root to distinguish a cloud outage f
 - Keep direct RideNav notification mirroring enabled as the independent fallback if the custom arrow screen cannot reach either data path.
 
 No third-party integration can be guaranteed maintenance-free for five years. The design is intended to fail visibly, recover automatically from ordinary network/process interruptions, and provide a diagnostic path when a vendor changes behavior.
+
+Cloud responses marked offline/stale also trigger the phone-local fallback. Native HTTP operations are bounded because Zepp does not document cancellation; a permanently hung native networking layer may require restarting Zepp. Bluetooth reconnection does not automatically launch the watch app: open RideNav and keep navigation foregrounded. Ordinary retries continue while that screen is open.

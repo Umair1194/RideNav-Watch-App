@@ -14,6 +14,7 @@ final class RelayClient {
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();
     private static final AtomicReference<Envelope> PENDING = new AtomicReference<>();
     private static final AtomicLong SEQUENCE = new AtomicLong(System.currentTimeMillis());
+    private static final String PUBLISHER = java.util.UUID.randomUUID().toString();
     private static volatile boolean draining;
     static volatile long lastSuccessAt;
     static volatile long lastAttemptAt;
@@ -55,11 +56,11 @@ final class RelayClient {
             connection.setRequestProperty("Authorization", "Bearer " + BuildConfig.RELAY_TOKEN);
             connection.setRequestProperty("Content-Type", "application/json");
             NavParser.Result r = envelope.result;
-            String body = "{\"active\":" + r.active + ",\"sequence\":" + envelope.sequence + ",\"instruction\":\"" + escape(r.instruction) + "\",\"distance\":\"" + escape(r.distance) + "\",\"eta\":\"" + escape(r.eta) + "\",\"road\":\"" + escape(r.road) + "\",\"maneuverType\":\"" + escape(r.maneuverType) + "\",\"maneuverModifier\":\"" + escape(r.maneuverModifier) + "\",\"nextInstruction\":\"" + escape(r.nextInstruction) + "\",\"nextDistance\":\"" + escape(r.nextDistance) + "\",\"roundaboutExit\":" + r.roundaboutExit + "}";
+            String body = "{\"active\":" + r.active + ",\"publisherId\":\"" + PUBLISHER + "\",\"sequence\":" + envelope.sequence + ",\"instruction\":\"" + escape(r.instruction) + "\",\"distance\":\"" + escape(r.distance) + "\",\"eta\":\"" + escape(r.eta) + "\",\"road\":\"" + escape(r.road) + "\",\"maneuverType\":\"" + escape(r.maneuverType) + "\",\"maneuverModifier\":\"" + escape(r.maneuverModifier) + "\",\"nextInstruction\":\"" + escape(r.nextInstruction) + "\",\"nextDistance\":\"" + escape(r.nextDistance) + "\",\"roundaboutExit\":" + r.roundaboutExit + "}";
             try (OutputStream out = connection.getOutputStream()) { out.write(body.getBytes(StandardCharsets.UTF_8)); }
             int status = connection.getResponseCode(); if (status < 200 || status >= 300) throw new Exception("Relay HTTP " + status);
         } finally { if (connection != null) connection.disconnect(); }
     }
 
-    private static String escape(String value) { return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", ""); }
+    private static String escape(String value) { String quoted = org.json.JSONObject.quote(value); return quoted.substring(1, quoted.length() - 1); }
 }

@@ -1,7 +1,7 @@
 const ARRIVAL_MS = 30000
 const GRACE_MS = 10000
 
-const isArrival = payload => payload?.maneuverType === 'arrive' || /arriv|destination/i.test(String(payload?.instruction || ''))
+const isArrival = payload => payload?.maneuverType === 'arrive' || /\b(?:you have arrived|you've arrived|arrived at|destination reached)\b/i.test(String(payload?.instruction || ''))
 
 export class GoogleNavSession {
   constructor() { this.reset() }
@@ -14,6 +14,10 @@ export class GoogleNavSession {
   }
 
   success(payload, now = Date.now()) {
+    if (payload.stale || payload.bridgeOnline === false || (payload.updatedAt && now - payload.updatedAt > 120000)) {
+      this.reset()
+      return { mode: 'bridge-sleeping', payload: null }
+    }
     if (payload.active) {
       this.hadActive = true
       this.lastPayload = payload
@@ -25,7 +29,6 @@ export class GoogleNavSession {
       this.arrivedAt = 0
       return { mode: 'live', payload, ageSeconds: payload.updatedAt ? Math.max(0, Math.round((now - payload.updatedAt) / 1000)) : 0 }
     }
-    if (this.hadActive && !this.arrivedAt) this.arrivedAt = now
     if (this.arrivedAt && now - this.arrivedAt < ARRIVAL_MS) return { mode: 'arrived', payload: this.lastPayload, arrivedFor: now - this.arrivedAt }
     this.lastPayload = null
     this.hadActive = false
@@ -38,7 +41,7 @@ export class GoogleNavSession {
     if (this.lastPayload?.active && now - this.lastLiveAt <= GRACE_MS) {
       return { mode: 'grace', payload: this.lastPayload, staleFor: now - this.lastLiveAt, error: message }
     }
-    return { mode: message.includes('Relay rejected') ? 'authentication' : 'reconnecting', payload: null, error: message }
+    return { mode: message.includes('authentication') ? 'authentication' : 'reconnecting', payload: null, error: message }
   }
 }
 

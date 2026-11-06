@@ -31,6 +31,6 @@ test('bridge retries cloud once and reports authentication separately', async ()
     calls += 1
     if (request.url.startsWith('http://')) throw new Error('blocked')
     return { status: 401, body: '{}' }
-  })), /Relay rejected request/)
+  })), /Relay authentication rejected/)
   assert.equal(calls, 3)
 })

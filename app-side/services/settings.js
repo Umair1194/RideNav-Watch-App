@@ -1,4 +1,5 @@
 import { settingsLib } from '@zeppos/zml/base-side'
+import { normalizeSettings } from '../../shared/settings.js'
 import { DEFAULT_SETTINGS } from '../../shared/constants.js'
 
 export function readSettings() {
@@ -9,5 +10,5 @@ export function readSettings() {
       try { stored[key] = JSON.parse(value) } catch (_) { stored[key] = value }
     }
   }
-  return { ...DEFAULT_SETTINGS, ...stored }
+  return normalizeSettings(stored)
 }

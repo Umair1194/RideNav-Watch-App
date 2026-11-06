@@ -28,3 +28,15 @@ test('progress requires consecutive passed samples', () => {
   const e=new NavigationEngine(route); e.update(sample(31.5222,74.3587,1000)); assert.equal(e.stepIndex,0)
   e.update(sample(31.5222,74.35872,2000)); assert.equal(e.stepIndex,1)
 })
+
+test('old GPS samples do not move a recovered session backwards', () => {
+  const engine = new NavigationEngine(route)
+  engine.update(sample(31.5204, 74.3587, 100000))
+  assert.equal(engine.update(sample(31.521, 74.3587, 99000)).reason, 'old-position')
+})
+test('a long GPS gap resets stale smoothing when recovering a saved route', () => {
+  const engine = new NavigationEngine(route, { lastPosition: { lat: 30, lon: 73, timestamp: 1000 } })
+  const result = engine.update(sample(31.5204, 74.3587, 200000))
+  assert.equal(result.position.lat, 31.5204)
+  assert.equal(result.position.lon, 74.3587)
+})
