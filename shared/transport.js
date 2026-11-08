@@ -2,12 +2,14 @@ import { createMessage, validateMessage } from './protocol.js'
 
 export function requestMessage(context, type, payload = {}, timeoutMs = type === 'ROUTE_REQUEST' || type === 'REROUTE_REQUEST' ? 30000 : 10000) {
   const outbound = createMessage(type, payload)
+  const schedule = context.watchTimers?.setTimeout || globalThis.setTimeout
+  const cancel = context.watchTimers?.clearTimeout || globalThis.clearTimeout
   let timer
   // ZML otherwise keeps a lost BLE request alive for its 60-second default.
   // Passing the native timeout releases the underlying handler as well as our UI watchdog.
   const request = Promise.resolve().then(() => context.request({ method: 'PROTOCOL', params: { message: outbound } }, { timeout: timeoutMs })).catch(() => { throw new Error('Phone connection interrupted') })
   const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error('Phone connection timeout')), timeoutMs)
+    timer = schedule(() => reject(new Error('Phone connection timeout')), timeoutMs)
   })
   return Promise.race([request, timeout]).then(result => {
     const validation = validateMessage(result?.message)
@@ -17,7 +19,7 @@ export function requestMessage(context, type, payload = {}, timeoutMs = type ===
     const expected = { GET_SETTINGS: 'SETTINGS_CHANGED', GOOGLE_NAV_STATUS: 'GOOGLE_NAV_RESPONSE', ROUTE_REQUEST: 'ROUTE_RESPONSE', REROUTE_REQUEST: 'ROUTE_RESPONSE' }[type]
     if (expected && validation.message.type !== expected) throw new Error('Unexpected phone response')
     return validation.message
-  }).finally(() => { if (timer) clearTimeout(timer) })
+  }).finally(() => { if (timer !== undefined) cancel(timer) })
 }
 
 export function callMessage(context, type, payload = {}) {

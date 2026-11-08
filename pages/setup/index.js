@@ -1,3 +1,4 @@
+import { setTimeout, clearTimeout } from '@zos/timer'
 import { BasePage } from '@zeppos/zml/base-page'
 import { push } from '@zos/router'
 import { Geolocation, checkSensor } from '@zos/sensor'
@@ -12,6 +13,7 @@ Page(BasePage({
   state: { demo: false, gps: null, status: null, position: null, settings: null },
   onInit(params) { try { this.state.demo = !!JSON.parse(params || '{}').demo } catch (_) {} },
   build() {
+    this.watchTimers = { setTimeout, clearTimeout }
     const generation = beginWatchSession(this.state)
     this.state.position = null
     this.state.settings = null

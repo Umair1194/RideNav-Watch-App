@@ -1,3 +1,4 @@
+import { setTimeout, clearTimeout } from '@zos/timer'
 import { BasePage } from '@zeppos/zml/base-page'
 import * as hmUI from '@zos/ui'
 import { back } from '@zos/router'
@@ -8,9 +9,10 @@ import { requestMessage } from '../../shared/transport.js'
 Page(BasePage({
   state: { rows: {} },
   build() {
+    this.watchTimers = { setTimeout, clearTimeout }
     beginWatchSession(this.state)
     text({ x: 65, y: 48, w: 350, h: 45, text: 'Connection details', text_size: 30 })
-    text({ x: 70, y: 80, w: 340, h: 27, text: 'RideNav watch 1.4.0', text_size: 16, color: COLORS.muted })
+    text({ x: 70, y: 80, w: 340, h: 27, text: 'RideNav watch 1.4.1', text_size: 16, color: COLORS.muted })
     this.state.rows.phone = text({ x: 65, y: 125, w: 350, h: 42, text: '… Watch ↔ phone', text_size: 19 })
     this.state.rows.bridge = text({ x: 65, y: 177, w: 350, h: 42, text: '… Android Bridge', text_size: 19 })
     this.state.rows.path = text({ x: 65, y: 229, w: 350, h: 42, text: '… Direction path', text_size: 19 })

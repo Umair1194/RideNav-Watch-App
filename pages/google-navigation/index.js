@@ -1,3 +1,4 @@
+import { setTimeout, clearTimeout } from '@zos/timer'
 import { BasePage } from '@zeppos/zml/base-page'
 import * as hmUI from '@zos/ui'
 import { home, push } from '@zos/router'
@@ -23,6 +24,7 @@ const fallbackManeuver = instruction => {
 Page(BasePage({
   state: { widgets: {}, controls: [], timer: null, busy: false, destroyed: false, generation: 0, instructionSignature: '', vibrator: null, failures: 0, settings: { vibration: true, hapticMode: 'all', hapticStrength: 'normal', displayMode: 'auto', textSize: 'standard', screenDuration: '1h' }, endArmed: false, nav: null },
   build() {
+    this.watchTimers = { setTimeout, clearTimeout }
     const generation = beginWatchSession(this.state)
     this.state.nav = new GoogleNavSession()
     const w = this.state.widgets
@@ -153,7 +155,7 @@ Page(BasePage({
     }
   },
   onDestroy() {
-    if (this.state.timer) clearTimeout(this.state.timer)
+    if (this.state.timer !== null) clearTimeout(this.state.timer)
     endWatchSession(this.state)
     try { this.state.vibrator?.stop(); resetPageBrightTime(); resetDropWristScreenOff(); resetPalmScreenOff(); setWakeUpRelaunch({ relaunch: false }) } catch (_) {}
   }

@@ -1,3 +1,4 @@
+import { setTimeout, clearTimeout } from '@zos/timer'
 import { BasePage } from '@zeppos/zml/base-page'
 import * as hmUI from '@zos/ui'
 import { push } from '@zos/router'
@@ -9,6 +10,7 @@ import { incomingCall, requestMessage } from '../../shared/transport.js'
 Page(BasePage({
   state: { status: null, detail: null },
   build() {
+    this.watchTimers = { setTimeout, clearTimeout }
     beginWatchSession(this.state)
     const saved = loadSession()
     text({ x: 60, y: 42, w: 360, h: 50, text: 'RideNav', text_size: 38 })
@@ -37,6 +39,6 @@ Page(BasePage({
       if (isCurrentWatchSession(this.state, generation)) this.state.timer = setTimeout(() => this.checkReadiness(), 5000)
     })
   },
-  onDestroy() { if (this.state.timer) clearTimeout(this.state.timer); endWatchSession(this.state) },
+  onDestroy() { if (this.state.timer !== null) clearTimeout(this.state.timer); endWatchSession(this.state) },
   onCall(data) { const message = incomingCall(data); if (message.valid && message.message.type === 'CLEAR_SESSION') clearSession() }
 }))

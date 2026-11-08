@@ -1,3 +1,4 @@
+import { setTimeout, clearTimeout } from '@zos/timer'
 import { BasePage } from '@zeppos/zml/base-page'
 import * as hmUI from '@zos/ui'
 import { replace } from '@zos/router'
@@ -23,6 +24,7 @@ Page(BasePage({
     catch (error) { clearSession(); return replace({ url: 'pages/error/index', params: { message: error.message } }) }
   },
   build() {
+    this.watchTimers = { setTimeout, clearTimeout }
     if (!this.state.engine) return
     beginWatchSession(this.state)
     this.state.rerouting = false
